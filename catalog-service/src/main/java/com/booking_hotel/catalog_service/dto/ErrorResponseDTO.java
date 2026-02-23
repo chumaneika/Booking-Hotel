@@ -1,0 +1,18 @@
+package com.booking_hotel.catalog_service.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record ErrorResponseDTO(
+        LocalDateTime timestamp,
+        int status,
+        String error,
+        String message,
+        String path,
+        List<ValidationError> validationErrors
+) {
+    public record ValidationError(
+            String field,
+            String message
+    ) {}
+}
