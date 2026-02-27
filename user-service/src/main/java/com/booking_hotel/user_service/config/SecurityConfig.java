@@ -27,11 +27,6 @@ public class SecurityConfig {
     private final CustomAuthenticationProvider authenticationProvider;
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public AuthenticationManager authenticationManager() {
         return new ProviderManager(authenticationProvider);
     }
@@ -45,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/users/create-user").permitAll()
                         .anyRequest().authenticated()
+//                                .requestMatchers("api/**").permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
