@@ -15,10 +15,10 @@ import java.util.Set;
 public class HotelEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "room_type_seq")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hotel_seq")
     @SequenceGenerator(
-            name = "room_type_seq",
-            sequenceName = "room_type_seq",
+            name = "hotel_seq",
+            sequenceName = "hotel_seq",
             allocationSize = 1
     )
     private Long id;
