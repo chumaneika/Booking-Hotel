@@ -4,5 +4,5 @@ public record HotelResponseSummaryDTO(
     Long id,
     String name,
     Integer rating,
-    String address // convert to summary box contain country and city
+    String shortAddress // convert to summary box contain country and city
 ) {}

@@ -8,12 +8,12 @@ import com.booking_hotel.catalog_service.entity.HotelEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = HotelMapperHelper.class)
+@Mapper(componentModel = "spring", uses = RoomTypeMapperHelper.class)
 public interface HotelMapper {
 
     HotelResponseRoomTypeDTO toRoomTypeDTO(HotelEntity entity);
 
-    @Mapping(source = "address", target = "address", qualifiedByName = "convertToSummaryAddress")
+    @Mapping(source = "address", target = "shortAddress", qualifiedByName = "convertToSummaryAddress")
     HotelResponseSummaryDTO toSummaryDTO(HotelEntity entity);
 
     HotelResponseDetailsDTO toDetailsDTO(HotelEntity entity);
