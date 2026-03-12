@@ -2,7 +2,6 @@ package com.booking_hotel.notification_service.service.impl;
 
 import com.booking_hotel.notification_service.entity.NotificationType;
 import com.booking_hotel.notification_service.service.NotificationSender;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,6 +20,11 @@ public class EmailNotificationSender implements NotificationSender {
     ) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
+    }
+
+    @Override
+    public boolean supports(NotificationType type) {
+        return type == NotificationType.EMAIL;
     }
 
     @Override

@@ -8,6 +8,11 @@ import org.springframework.stereotype.Service;
 public class PushNotificationSender implements NotificationSender {
 
     @Override
+    public boolean supports(NotificationType type) {
+        return type == NotificationType.PUSH;
+    }
+
+    @Override
     public void send(String recipient, String subject, String message) {
         throw new UnsupportedOperationException("Push notifications are not implemented yet");
     }
