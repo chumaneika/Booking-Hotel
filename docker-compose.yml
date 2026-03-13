@@ -16,6 +16,7 @@ services:
     depends_on:
       - service-discovery
     environment:
+      EUREKA_CLIENT_ENABLED: "true"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka
     ports:
       - "8080:8080"
@@ -202,7 +203,7 @@ services:
       notification-db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/payment_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://payment-db:5432/payment_db
       SPRING_DATASOURCE_USERNAME: malik
       SPRING_DATASOURCE_PASSWORD: 12345678
       EUREKA_CLIENT_ENABLED: "true"
@@ -237,7 +238,7 @@ services:
     depends_on:
       - service-discovery
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/review_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://review-db:5432/review_db
       SPRING_DATASOURCE_USERNAME: malik
       SPRING_DATASOURCE_PASSWORD: 12345678
       EUREKA_CLIENT_ENABLED: "true"
@@ -275,7 +276,7 @@ services:
       notification-db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/admin_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://admin-db:5432/admin_db
       SPRING_DATASOURCE_USERNAME: malik
       SPRING_DATASOURCE_PASSWORD: 12345678
       EUREKA_CLIENT_ENABLED: "true"
