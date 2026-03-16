@@ -20,11 +20,6 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> testEndpoint() {
-        return ResponseEntity.ok("Hello from Review Service");
-    }
-
     @PostMapping
     public ResponseEntity<ReviewSummaryResponseDTO> createReview(
             @RequestBody @Valid ReviewCreateRequestDTO dto) {

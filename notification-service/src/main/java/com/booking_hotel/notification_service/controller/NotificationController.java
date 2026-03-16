@@ -14,11 +14,6 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @GetMapping("/hello")
-    public ResponseEntity<String> testEndpoint() {
-        return ResponseEntity.ok("Hello from Notification Service");
-    }
-
     @PostMapping("/registration-success")
     public ResponseEntity<Void> sendRegistrationSuccessEmail(
             @RequestBody @Valid RegistrationSuccessNotificationRequest request
