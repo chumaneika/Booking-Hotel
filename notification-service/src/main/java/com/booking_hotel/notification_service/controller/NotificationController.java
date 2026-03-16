@@ -5,10 +5,7 @@ import com.booking_hotel.notification_service.service.NotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -16,6 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
 
     private final NotificationService notificationService;
+
+    @GetMapping("/hello")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("Hello from Notification Service");
+    }
 
     @PostMapping("/registration-success")
     public ResponseEntity<Void> sendRegistrationSuccessEmail(
