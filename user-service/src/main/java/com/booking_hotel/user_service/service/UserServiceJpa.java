@@ -24,8 +24,7 @@ public class UserServiceJpa implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserResponseDTO createUser(UserCreateDTO dto) {
-        // todo
+    public UserResponseDTO saveUser(UserCreateDTO dto) {
         return null;
     }
 

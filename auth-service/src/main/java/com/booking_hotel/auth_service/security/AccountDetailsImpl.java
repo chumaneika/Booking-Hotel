@@ -17,7 +17,6 @@ public class AccountDetailsImpl implements UserDetails {
 
     private Long id;
     private String email;
-    private String name;
     private String password;
     private Role role;
     private boolean enabled;
@@ -30,7 +29,6 @@ public class AccountDetailsImpl implements UserDetails {
 
         return new AccountDetailsImpl(
                 user.getId(),
-                user.getEmail(),
                 user.getEmail(),
                 user.getPasswordHash(),
                 user.getRole(),
@@ -72,5 +70,9 @@ public class AccountDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public Long getId() {
+        return id;
     }
 }

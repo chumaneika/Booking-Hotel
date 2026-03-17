@@ -4,14 +4,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.UUID;
+import java.time.LocalDate;
 
-public record UserUpdateNameDTO(
-
-        @NotNull
-        UUID userId,
+public record UserUpdatePersonalInfoDTO(
 
         @NotBlank
         @Size(min = 2, max = 50)
-        String name
+        String firstname,
+
+        @NotBlank
+        @Size(min = 2, max = 50)
+        String surname,
+
+        @NotNull
+        LocalDate birthday
+
 ) {}

@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.UUID;
 
 public interface UserService {
-    UserResponseDTO createUser(UserCreateDTO dto);
+    UserResponseDTO saveUser(UserCreateDTO dto);
     void deleteUser(UUID userId);
     UserResponseDTO updateName(UUID userId, String newName);
     UserResponseDTO updateStatus(UUID userId, Status status);

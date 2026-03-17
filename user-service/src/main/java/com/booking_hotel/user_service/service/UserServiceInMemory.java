@@ -19,7 +19,7 @@ public class UserServiceInMemory implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserResponseDTO createUser(UserCreateDTO dto) {
+    public UserResponseDTO saveUser(UserCreateDTO dto) {
         return null;
     }
 

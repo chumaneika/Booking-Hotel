@@ -2,7 +2,7 @@ package com.booking_hotel.user_service.controller;
 
 import com.booking_hotel.user_service.dto.UserCreateDTO;
 import com.booking_hotel.user_service.dto.UserResponseDTO;
-import com.booking_hotel.user_service.dto.UserUpdateNameDTO;
+import com.booking_hotel.user_service.dto.UserUpdatePersonalInfoDTO;
 import com.booking_hotel.user_service.dto.UserUpdateStatusDTO;
 import com.booking_hotel.user_service.service.UserService;
 import jakarta.validation.Valid;
@@ -31,7 +31,7 @@ public class UserController {
     }
 
     @PatchMapping("/update-name")
-    public ResponseEntity<UserResponseDTO> updateName(@RequestBody @Valid UserUpdateNameDTO dto) {
+    public ResponseEntity<UserResponseDTO> updateName(@RequestBody @Valid UserUpdatePersonalInfoDTO dto) {
         return null;
     }
 

@@ -4,14 +4,18 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -22,6 +26,9 @@ public class JwtService {
 
     @Value("${jwt.expiration:86400000}") // 24 hours default
     private Long expiration;
+
+    @Value("${jwt.refresh-expiration:604800000}") // 7 days default
+    private Long refreshExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -65,19 +72,35 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails, Long userId) {
+        return generateAccessToken(userDetails, userId);
+    }
+
+    public String generateAccessToken(UserDetails userDetails, Long userId) {
         String email = userDetails.getUsername();
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("email", email);
-        return createToken(claims, email);
+        claims.put("tokenType", "ACCESS");
+        claims.put("roles", extractRoles(userDetails));
+        return createToken(claims, email, expiration);
     }
 
-    private String createToken(Map<String, Object> claims, String subject) {
+    public String generateRefreshToken(UserDetails userDetails, Long userId) {
+        String email = userDetails.getUsername();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("email", email);
+        claims.put("tokenType", "REFRESH");
+        claims.put("jti", UUID.randomUUID().toString());
+        return createToken(claims, email, refreshExpiration);
+    }
+
+    private String createToken(Map<String, Object> claims, String subject, Long ttlMs) {
         return Jwts.builder()
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .expiration(new Date(System.currentTimeMillis() + ttlMs))
                 .signWith(getSigningKey())
                 .compact();
     }
@@ -85,6 +108,25 @@ public class JwtService {
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    public Boolean validateRefreshToken(String token, UserDetails userDetails) {
+        return validateToken(token, userDetails) && "REFRESH".equals(extractTokenType(token));
+    }
+
+    public String extractTokenType(String token) {
+        return extractAllClaims(token).get("tokenType", String.class);
+    }
+
+    public Instant extractExpirationInstant(String token) {
+        return extractExpiration(token).toInstant();
+    }
+
+    private List<String> extractRoles(UserDetails userDetails) {
+        return userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
     }
 
     private SecretKey getSigningKey() {

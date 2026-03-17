@@ -1,26 +1,32 @@
 package com.booking_hotel.user_service.dto.mapper;
 
+
 import com.booking_hotel.user_service.dto.UserCreateDTO;
 import com.booking_hotel.user_service.dto.UserResponseDTO;
+import com.booking_hotel.user_service.entity.PersonalInfo;
 import com.booking_hotel.user_service.entity.UserEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    default UserEntity toEntity(UserCreateDTO dto) {
-        if (dto == null) return null;
-        return new UserEntity(dto.name());
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "status", expression = "java(com.booking_hotel.user_service.entity.Status.ACTIVE)")
+    @Mapping(target = "personalInfo", expression = "java(toPersonalInfo(dto))")
+    UserEntity toEntity(UserCreateDTO dto);
 
-    default UserResponseDTO toResponse(UserEntity entity) {
-        if (entity == null) return null;
-        return new UserResponseDTO(
-                entity.getId(),
-                entity.getName(),
-                null,
-                null,
-                entity.getStatus()
+    @Mapping(target = "firstname", source = "personalInfo.firstname")
+    @Mapping(target = "surname", source = "personalInfo.surname")
+    @Mapping(target = "birthday", source = "personalInfo.birthday")
+    UserResponseDTO toResponse(UserEntity entity);
+
+
+    default PersonalInfo toPersonalInfo(UserCreateDTO dto) {
+        return new PersonalInfo(
+                dto.firstname(),
+                dto.surname(),
+                dto.birthday()
         );
     }
 

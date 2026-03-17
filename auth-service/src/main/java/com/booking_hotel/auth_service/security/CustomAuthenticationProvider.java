@@ -9,7 +9,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
 
@@ -29,6 +31,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         if (!userDetails.isEnabled()) {
             throw new BadCredentialsException("User account is disabled");
+        }
+
+        if (!userDetails.isAccountNonLocked()) {
+            throw new BadCredentialsException("User account is locked");
         }
 
         return new UsernamePasswordAuthenticationToken(

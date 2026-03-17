@@ -1,11 +1,11 @@
 package com.booking_hotel.user_service.entity;
 
-import com.booking_hotel.user_service.entity.Status;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 
@@ -24,24 +24,20 @@ public class UserEntity {
     )
     private UUID id;
 
-    @Column(nullable = false)
-    private String name;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status;
 
-    public UserEntity(String name) {
-        changeName(name);
-        this.status = Status.ACTIVE;
+    @Embedded
+    private PersonalInfo personalInfo;
+
+    public UserEntity(PersonalInfo personalInfo, Status status) {
+        this.personalInfo = personalInfo;
+        this.status = status;
     }
 
-    public void changeName(String name) {
-        if (name != null && name.length() > 2 && name.length() <= 50) {
-            this.name = name;
-        } else {
-            throw new IllegalArgumentException("User's name is not valid");
-        }
+    public void changePersonalInfo(String firstname, String surname, LocalDate birthday) {
+        this.personalInfo = new PersonalInfo(firstname, surname, birthday);
     }
 
     public void changeStatus(Status status) {
