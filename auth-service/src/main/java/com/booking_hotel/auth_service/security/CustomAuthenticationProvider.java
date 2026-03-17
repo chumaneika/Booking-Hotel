@@ -1,4 +1,4 @@
-package com.booking_hotel.user_service.security;
+package com.booking_hotel.auth_service.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -9,7 +9,6 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -30,10 +29,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         if (!userDetails.isEnabled()) {
             throw new BadCredentialsException("User account is disabled");
-        }
-
-        if (!userDetails.isAccountNonLocked()) {
-            throw new BadCredentialsException("User account is locked");
         }
 
         return new UsernamePasswordAuthenticationToken(

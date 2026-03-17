@@ -4,15 +4,14 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 public class JwtService {
@@ -20,36 +19,42 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration:86400000}") // 24 hours default
-    private Long expiration;
-
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractAllClaims(token).getSubject();
     }
 
-    /** Email from token (subject or explicit "email" claim). */
-    public String extractEmail(String token) {
-        Claims claims = extractAllClaims(token);
-        String email = claims.get("email", String.class);
-        return email != null ? email : claims.getSubject();
-    }
+    public List<String> extractRoles(String token) {
+        Object rolesClaim = extractAllClaims(token).get("roles");
 
-    public Long extractUserId(String token) {
-        Claims claims = extractAllClaims(token);
-        Object value = claims.get("userId");
-        if (value instanceof Number) {
-            return ((Number) value).longValue();
+        if (rolesClaim == null) {
+            return Collections.emptyList();
         }
-        return null;
+
+        if (rolesClaim instanceof Collection<?> roleCollection) {
+            return roleCollection.stream()
+                    .map(Object::toString)
+                    .map(this::normalizeRole)
+                    .toList();
+        }
+
+        if (rolesClaim instanceof String rolesString) {
+            return List.of(rolesString.split(",")).stream()
+                    .map(String::trim)
+                    .filter(role -> !role.isEmpty())
+                    .map(this::normalizeRole)
+                    .toList();
+        }
+
+        return Collections.emptyList();
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return claims.getExpiration() == null || claims.getExpiration().getTime() > System.currentTimeMillis();
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private Claims extractAllClaims(String token) {
@@ -60,33 +65,6 @@ public class JwtService {
                 .getPayload();
     }
 
-    private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
-    }
-
-    public String generateToken(UserDetails userDetails, Long userId) {
-        String email = userDetails.getUsername();
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("email", email);
-        return createToken(claims, email);
-    }
-
-    private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .claims(claims)
-                .subject(subject)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSigningKey())
-                .compact();
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
@@ -94,4 +72,15 @@ public class JwtService {
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    private String normalizeRole(String role) {
+        String trimmed = role == null ? "" : role.trim();
+        if (trimmed.isEmpty()) {
+            return trimmed;
+        }
+
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        return upper.startsWith("ROLE_") ? upper : "ROLE_" + upper;
+    }
+
 }

@@ -6,13 +6,15 @@ import com.booking_hotel.user_service.entity.Status;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.UUID;
+
 public interface UserService {
     UserResponseDTO createUser(UserCreateDTO dto);
-    void deleteUser(Long userId);
-    UserResponseDTO updateName(Long userId, String newName);
-    UserResponseDTO updateStatus(Long userId, Status status);
-    UserResponseDTO findUser(Long id);
+    void deleteUser(UUID userId);
+    UserResponseDTO updateName(UUID userId, String newName);
+    UserResponseDTO updateStatus(UUID userId, Status status);
+    UserResponseDTO findUser(UUID id);
     UserResponseDTO findUser(String email);
-    boolean checkActivityUser(Long userId);
+    boolean checkActivityUser(UUID userId);
     Page<UserResponseDTO> getAllUsers(Status status, Pageable pageable);
 }

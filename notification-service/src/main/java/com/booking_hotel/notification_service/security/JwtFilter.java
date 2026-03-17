@@ -1,6 +1,5 @@
 package com.booking_hotel.notification_service.security;
 
-import com.booking_hotel.notification_service.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

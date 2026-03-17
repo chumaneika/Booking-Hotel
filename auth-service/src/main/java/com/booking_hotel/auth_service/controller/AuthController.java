@@ -1,14 +1,11 @@
-package com.booking_hotel.user_service.controller;
+package com.booking_hotel.auth_service.controller;
 
-import com.booking_hotel.user_service.dto.AuthResponse;
-import com.booking_hotel.user_service.dto.LoginRequest;
-import com.booking_hotel.user_service.dto.RegisterRequest;
-import com.booking_hotel.user_service.dto.UserCreateDTO;
-import com.booking_hotel.user_service.dto.UserResponseDTO;
-import com.booking_hotel.user_service.security.JwtService;
-import com.booking_hotel.user_service.security.UserDetailsImpl;
-import com.booking_hotel.user_service.security.UserDetailsServiceImpl;
-import com.booking_hotel.user_service.service.UserService;
+
+import com.booking_hotel.auth_service.dto.*;
+import com.booking_hotel.auth_service.security.AccountDetailsServiceImpl;
+import com.booking_hotel.auth_service.security.JwtService;
+import com.booking_hotel.auth_service.security.AccountDetailsImpl;
+import com.booking_hotel.auth_service.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,21 +27,21 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserService userService;
-    private final UserDetailsServiceImpl userDetailsService;
+    private final AccountDetailsServiceImpl userDetailsService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request) {
-        UserCreateDTO createDTO = new UserCreateDTO(
+        AccountCreateDTO createDTO = new AccountCreateDTO(
                 request.name(),
                 request.password(),
                 request.email()
         );
 
-        UserResponseDTO userResponse = userService.createUser(createDTO);
+        AccountResponseDTO userResponse = userService.createUser(createDTO);
 
         // Load user details for token generation
         UserDetails userDetails = userDetailsService.loadUserByUsername(userResponse.email());
-        UserDetailsImpl userDetailsImpl = (UserDetailsImpl) userDetails;
+        AccountDetailsImpl userDetailsImpl = (AccountDetailsImpl) userDetails;
 
         String token = jwtService.generateToken(userDetailsImpl, userResponse.id());
 
@@ -52,7 +49,7 @@ public class AuthController {
                 token,
                 userResponse.id(),
                 userResponse.email(),
-                userResponse.name()
+                request.name()
         ));
     }
 
@@ -66,7 +63,7 @@ public class AuthController {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        AccountDetailsImpl userDetails = (AccountDetailsImpl) authentication.getPrincipal();
 
         String token = jwtService.generateToken(userDetails, userDetails.getId());
 

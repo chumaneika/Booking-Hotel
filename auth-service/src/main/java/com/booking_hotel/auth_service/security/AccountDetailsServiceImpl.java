@@ -1,7 +1,7 @@
-package com.booking_hotel.user_service.security;
+package com.booking_hotel.auth_service.security;
 
-import com.booking_hotel.user_service.entity.UserEntity;
-import com.booking_hotel.user_service.repository.UserRepository;
+import com.booking_hotel.auth_service.entity.AccountEntity;
+import com.booking_hotel.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,16 +11,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class UserDetailsServiceImpl implements UserDetailsService {
+public class AccountDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        AccountEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
 
-        return UserDetailsImpl.build(user);
+        return AccountDetailsImpl.build(user);
     }
 }

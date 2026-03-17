@@ -1,4 +1,4 @@
-package com.booking_hotel.user_service.dto;
+package com.booking_hotel.auth_service.dto;
 
 public record AuthResponse(
         String token,

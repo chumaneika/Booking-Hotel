@@ -1,8 +1,7 @@
-package com.booking_hotel.user_service.security;
+package com.booking_hotel.auth_service.security;
 
-import com.booking_hotel.user_service.entity.Role;
-import com.booking_hotel.user_service.entity.Status;
-import com.booking_hotel.user_service.entity.UserEntity;
+import com.booking_hotel.auth_service.entity.AccountEntity;
+import com.booking_hotel.auth_service.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,28 +13,28 @@ import java.util.Collections;
 
 @Getter
 @AllArgsConstructor
-public class UserDetailsImpl implements UserDetails {
+public class AccountDetailsImpl implements UserDetails {
 
     private Long id;
     private String email;
     private String name;
     private String password;
     private Role role;
-    private Status status;
+    private boolean enabled;
     private Collection<? extends GrantedAuthority> authorities;
 
-    public static UserDetailsImpl build(UserEntity user) {
+    public static AccountDetailsImpl build(AccountEntity user) {
         Collection<GrantedAuthority> authorities = Collections.singletonList(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
 
-        return new UserDetailsImpl(
+        return new AccountDetailsImpl(
                 user.getId(),
                 user.getEmail(),
-                user.getName(),
+                user.getEmail(),
                 user.getPasswordHash(),
                 user.getRole(),
-                user.getStatus(),
+                user.isEnabled(),
                 authorities
         );
     }
@@ -62,7 +61,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return status != Status.BLOCKED;
+        return true;
     }
 
     @Override
@@ -72,6 +71,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return status == Status.ACTIVE;
+        return enabled;
     }
 }
