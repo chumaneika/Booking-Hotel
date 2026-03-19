@@ -6,8 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
-public record UserUpdatePersonalInfoDTO(
-
+public record UserCreateRequestDTO(
         @NotBlank
         @Size(min = 2, max = 50)
         String firstname,
@@ -18,5 +17,4 @@ public record UserUpdatePersonalInfoDTO(
 
         @NotNull
         LocalDate birthday
-
 ) {}

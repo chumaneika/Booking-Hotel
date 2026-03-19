@@ -1,6 +1,6 @@
 package com.booking_hotel.user_service.controller;
 
-import com.booking_hotel.user_service.dto.ErrorResponse;
+import com.booking_hotel.user_service.dto.ErrorResponseDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFoundEntity(
+    public ResponseEntity<ErrorResponseDTO> handleNotFoundEntity(
             EntityNotFoundException e,
             HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
                 HttpStatus.NOT_FOUND.getReasonPhrase(),
@@ -41,10 +41,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+    public ResponseEntity<ErrorResponseDTO> handleIllegalArgument(
             IllegalArgumentException e,
             HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -56,20 +56,20 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
+    public ResponseEntity<ErrorResponseDTO> handleMethodArgumentNotValid(
             MethodArgumentNotValidException e,
             HttpServletRequest request) {
-        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()
+        List<ErrorResponseDTO.FieldError> fieldErrors = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(error -> new ErrorResponse.FieldError(
+                .map(error -> new ErrorResponseDTO.FieldError(
                         error.getField(),
                         error.getDefaultMessage(),
                         error.getRejectedValue()
                 ))
                 .collect(Collectors.toList());
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -81,14 +81,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+    public ResponseEntity<ErrorResponseDTO> handleConstraintViolation(
             ConstraintViolationException e,
             HttpServletRequest request) {
-        List<ErrorResponse.FieldError> fieldErrors = e.getConstraintViolations()
+        List<ErrorResponseDTO.FieldError> fieldErrors = e.getConstraintViolations()
                 .stream()
                 .map(violation -> {
                     String fieldName = violation.getPropertyPath().toString();
-                    return new ErrorResponse.FieldError(
+                    return new ErrorResponseDTO.FieldError(
                             fieldName,
                             violation.getMessage(),
                             violation.getInvalidValue()
@@ -96,7 +96,7 @@ public class GlobalExceptionHandler {
                 })
                 .collect(Collectors.toList());
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -108,7 +108,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+    public ResponseEntity<ErrorResponseDTO> handleMethodNotSupported(
             HttpRequestMethodNotSupportedException e,
             HttpServletRequest request) {
         String message = String.format(
@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
                 String.join(", ", e.getSupportedMethods())
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.METHOD_NOT_ALLOWED.value(),
                 HttpStatus.METHOD_NOT_ALLOWED.getReasonPhrase(),
@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+    public ResponseEntity<ErrorResponseDTO> handleMediaTypeNotSupported(
             HttpMediaTypeNotSupportedException e,
             HttpServletRequest request) {
         String message = String.format(
@@ -138,7 +138,7 @@ public class GlobalExceptionHandler {
                 e.getSupportedMediaTypes()
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),
                 HttpStatus.UNSUPPORTED_MEDIA_TYPE.getReasonPhrase(),
@@ -150,7 +150,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
+    public ResponseEntity<ErrorResponseDTO> handleMissingServletRequestParameter(
             MissingServletRequestParameterException e,
             HttpServletRequest request) {
         String message = String.format(
@@ -159,7 +159,7 @@ public class GlobalExceptionHandler {
                 e.getParameterType()
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -171,7 +171,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MissingPathVariableException.class)
-    public ResponseEntity<ErrorResponse> handleMissingPathVariable(
+    public ResponseEntity<ErrorResponseDTO> handleMissingPathVariable(
             MissingPathVariableException e,
             HttpServletRequest request) {
         String message = String.format(
@@ -179,7 +179,7 @@ public class GlobalExceptionHandler {
                 e.getVariableName()
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -191,7 +191,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(
+    public ResponseEntity<ErrorResponseDTO> handleMethodArgumentTypeMismatch(
             MethodArgumentTypeMismatchException e,
             HttpServletRequest request) {
         String message = String.format(
@@ -200,7 +200,7 @@ public class GlobalExceptionHandler {
                 e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown"
         );
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -212,12 +212,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+    public ResponseEntity<ErrorResponseDTO> handleHttpMessageNotReadable(
             HttpMessageNotReadableException e,
             HttpServletRequest request) {
         String message = "Malformed JSON request or invalid request body format";
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
@@ -229,7 +229,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+    public ResponseEntity<ErrorResponseDTO> handleDataIntegrityViolation(
             DataIntegrityViolationException e,
             HttpServletRequest request) {
         String message = "Data integrity violation";
@@ -241,7 +241,7 @@ public class GlobalExceptionHandler {
             message = "Cannot delete or update resource due to existing references";
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),
                 HttpStatus.CONFLICT.getReasonPhrase(),
@@ -253,10 +253,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(java.nio.file.AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(
             AccessDeniedException e,
             HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.getReasonPhrase(),
@@ -268,10 +268,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(
+    public ResponseEntity<ErrorResponseDTO> handleRuntimeException(
             RuntimeException e,
             HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
@@ -283,10 +283,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(
+    public ResponseEntity<ErrorResponseDTO> handleException(
             Exception e,
             HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),

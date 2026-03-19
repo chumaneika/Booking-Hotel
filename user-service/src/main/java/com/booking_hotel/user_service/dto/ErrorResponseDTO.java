@@ -3,7 +3,7 @@ package com.booking_hotel.user_service.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public record ErrorResponse(
+public record ErrorResponseDTO(
         LocalDateTime timestamp,
         int status,
         String error,

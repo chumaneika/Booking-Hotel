@@ -1,10 +1,14 @@
 package com.booking_hotel.user_service.service;
 
-import com.booking_hotel.user_service.dto.UserCreateDTO;
-import com.booking_hotel.user_service.dto.UserResponseDTO;
+import com.booking_hotel.user_service.dto.UserCreateRequestDTO;
+import com.booking_hotel.user_service.dto.UserSummaryResponseDTO;
+import com.booking_hotel.user_service.dto.UserUpdatePersonalInfoRequestDTO;
+import com.booking_hotel.user_service.dto.UserUpdateStatusRequestDTO;
 import com.booking_hotel.user_service.dto.mapper.UserMapper;
 import com.booking_hotel.user_service.entity.Status;
+import com.booking_hotel.user_service.entity.UserEntity;
 import com.booking_hotel.user_service.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
@@ -24,42 +28,63 @@ public class UserServiceJpa implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserResponseDTO saveUser(UserCreateDTO dto) {
-        return null;
+    public UserSummaryResponseDTO saveUser(UserCreateRequestDTO dto) {
+        UserEntity entity = userRepository.save(userMapper.toEntity(dto));
+
+        return userMapper.toResponse(entity);
     }
 
     @Override
     public void deleteUser(UUID userId) {
+        UserEntity entity = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+
+        entity.changeStatus(Status.DELETED);
+    }
+
+    @Override
+    public UserSummaryResponseDTO updatePersonalInfo(UserUpdatePersonalInfoRequestDTO dto) {
+        UserEntity entity = userRepository.findById(dto.id())
+                .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+
+        entity.changePersonalInfo(dto.firstname(), dto.surname(), dto.birthday());
+        userRepository.save(entity);
+
+        return userMapper.toResponse(entity);
 
     }
 
     @Override
-    public UserResponseDTO updateName(UUID userId, String newName) {
-        return null;
+    public UserSummaryResponseDTO updateStatus(UserUpdateStatusRequestDTO dto) {
+        UserEntity entity = userRepository.findById(dto.id())
+                .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+
+        entity.changeStatus(dto.status());
+        userRepository.save(entity);
+
+        return userMapper.toResponse(entity);
     }
 
     @Override
-    public UserResponseDTO updateStatus(UUID userId, Status status) {
-        return null;
-    }
+    public UserSummaryResponseDTO findUser(UUID userId) {
+        UserEntity entity = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User is not found"));
 
-    @Override
-    public UserResponseDTO findUser(UUID userId) {
-        return null;
-    }
-
-    @Override
-    public UserResponseDTO findUser(String email) {
-        return null;
+        return userMapper.toResponse(entity);
     }
 
     @Override
     public boolean checkActivityUser(UUID userId) {
-        return false;
+        UserEntity entity = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+
+        return entity.getStatus().equals(Status.ACTIVE);
     }
 
     @Override
-    public Page<UserResponseDTO> getAllUsers(Status status, Pageable pageable) {
-        return null;
+    public Page<UserSummaryResponseDTO> getUsers(Status status, Pageable pageable) {
+        return userRepository
+                .findByStatus(status, pageable)
+                .map(userMapper::toResponse);
     }
 }

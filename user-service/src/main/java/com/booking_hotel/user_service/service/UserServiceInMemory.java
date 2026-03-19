@@ -1,7 +1,9 @@
 package com.booking_hotel.user_service.service;
 
-import com.booking_hotel.user_service.dto.UserCreateDTO;
-import com.booking_hotel.user_service.dto.UserResponseDTO;
+import com.booking_hotel.user_service.dto.UserCreateRequestDTO;
+import com.booking_hotel.user_service.dto.UserSummaryResponseDTO;
+import com.booking_hotel.user_service.dto.UserUpdatePersonalInfoRequestDTO;
+import com.booking_hotel.user_service.dto.UserUpdateStatusRequestDTO;
 import com.booking_hotel.user_service.dto.mapper.UserMapper;
 import com.booking_hotel.user_service.entity.Status;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,7 @@ public class UserServiceInMemory implements UserService {
     private final UserMapper userMapper;
 
     @Override
-    public UserResponseDTO saveUser(UserCreateDTO dto) {
+    public UserSummaryResponseDTO saveUser(UserCreateRequestDTO dto) {
         return null;
     }
 
@@ -29,22 +31,17 @@ public class UserServiceInMemory implements UserService {
     }
 
     @Override
-    public UserResponseDTO updateName(UUID userId, String newName) {
+    public UserSummaryResponseDTO updatePersonalInfo(UserUpdatePersonalInfoRequestDTO dto) {
         return null;
     }
 
     @Override
-    public UserResponseDTO updateStatus(UUID userId, Status status) {
+    public UserSummaryResponseDTO updateStatus(UserUpdateStatusRequestDTO dto) {
         return null;
     }
 
     @Override
-    public UserResponseDTO findUser(UUID userId) {
-        return null;
-    }
-
-    @Override
-    public UserResponseDTO findUser(String email) {
+    public UserSummaryResponseDTO findUser(UUID userId) {
         return null;
     }
 
@@ -54,7 +51,7 @@ public class UserServiceInMemory implements UserService {
     }
 
     @Override
-    public Page<UserResponseDTO> getAllUsers(Status status, Pageable pageable) {
+    public Page<UserSummaryResponseDTO> getUsers(Status status, Pageable pageable) {
         return Page.empty();
     }
 }
