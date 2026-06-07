@@ -46,6 +46,7 @@ public class UserServiceJpa implements UserService {
     public UserSummaryResponseDTO updatePersonalInfo(UserUpdatePersonalInfoRequestDTO dto) {
         UserEntity entity = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+        ensureUserIsNotDeleted(entity);
 
         entity.changePersonalInfo(dto.firstname(), dto.surname(), dto.birthday());
         userRepository.save(entity);
@@ -59,6 +60,13 @@ public class UserServiceJpa implements UserService {
         UserEntity entity = userRepository.findById(dto.id())
                 .orElseThrow(() -> new EntityNotFoundException("User is not found"));
 
+        if (dto.status() == Status.DELETED) {
+            throw new IllegalArgumentException("Use delete endpoint to mark user as deleted");
+        }
+        if (entity.getStatus() == Status.DELETED) {
+            throw new IllegalStateException("Deleted user status cannot be changed");
+        }
+
         entity.changeStatus(dto.status());
         userRepository.save(entity);
 
@@ -69,6 +77,7 @@ public class UserServiceJpa implements UserService {
     public UserSummaryResponseDTO findUser(UUID userId) {
         UserEntity entity = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User is not found"));
+        ensureUserIsNotDeleted(entity);
 
         return userMapper.toResponse(entity);
     }
@@ -86,5 +95,11 @@ public class UserServiceJpa implements UserService {
         return userRepository
                 .findByStatus(status, pageable)
                 .map(userMapper::toResponse);
+    }
+
+    private void ensureUserIsNotDeleted(UserEntity entity) {
+        if (entity.getStatus() == Status.DELETED) {
+            throw new IllegalStateException("Deleted user is not available");
+        }
     }
 }

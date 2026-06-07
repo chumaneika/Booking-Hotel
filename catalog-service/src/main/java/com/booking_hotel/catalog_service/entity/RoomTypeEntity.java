@@ -43,7 +43,7 @@ public class RoomTypeEntity {
     @Column(name = "bed_type", nullable = false)
     private BedType bedType;
 
-    @Column(name = "quantity_room")
+    @Column(name = "quantity_room", nullable = false)
     private Integer quantityRoom;
 
     public RoomTypeEntity(HotelEntity hotel, BedType bedType, Integer capacity, NameRoomType name, BigDecimal basePrice, Integer sizeSqm, Integer quantityRoom) {
@@ -53,7 +53,7 @@ public class RoomTypeEntity {
         this.name = name;
         this.basePrice = basePrice;
         this.sizeSqm = sizeSqm;
-        this.quantityRoom = quantityRoom;
+        changeQuantityRoom(quantityRoom);
     }
 
     public void changeHotel(HotelEntity hotel) {
@@ -99,5 +99,11 @@ public class RoomTypeEntity {
         this.bedType = bedType;
     }
 
-}
+    public void changeQuantityRoom(Integer quantityRoom) {
+        if (quantityRoom == null || quantityRoom <= 0) {
+            throw new IllegalArgumentException("Room quantity must be positive");
+        }
+        this.quantityRoom = quantityRoom;
+    }
 
+}

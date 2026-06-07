@@ -30,14 +30,11 @@ public class RoomTypeServiceJpa implements RoomTypeService {
 
     @Override
     public List<RoomTypeResponseSummaryDTO> getAllRoomTypes(Long hotelId) {
-        List<RoomTypeEntity> roomTypes = roomTypeRepository.findRoomTypeByHotelId(hotelId);
-
-        if (roomTypes.isEmpty()) {
-            throw new IllegalStateException("Hotel does not have any rooms");
-            // или 404, если отель не найден — зависит от бизнес-логики
+        if (!hotelRepository.existsById(hotelId)) {
+            throw new EntityNotFoundException("Hotel is not found");
         }
 
-        return roomTypes.stream()
+        return roomTypeRepository.findRoomTypeByHotelId(hotelId).stream()
                 .map(roomTypeMapper::toSummaryDTO)
                 .toList();
     }
@@ -70,7 +67,7 @@ public class RoomTypeServiceJpa implements RoomTypeService {
                 dto.name(),
                 dto.basePrice(),
                 dto.sizeSqm(),
-                null // quantityRoom can be set later
+                dto.quantityRoom()
         );
 
         roomTypeRepository.save(roomType);
@@ -100,8 +97,9 @@ public class RoomTypeServiceJpa implements RoomTypeService {
         if (dto.bedType() != null) {
             roomType.changeBedType(dto.bedType());
         }
-        // quantityRoom doesn't have a change method, so we'll need to handle it differently
-        // For now, we'll skip it or add a setter if needed
+        if (dto.quantityRoom() != null) {
+            roomType.changeQuantityRoom(dto.quantityRoom());
+        }
 
         roomTypeRepository.save(roomType);
     }

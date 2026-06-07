@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "reviews")
@@ -27,8 +28,8 @@ public class ReviewEntity {
     @Column(name = "hotel_id", nullable = false)
     private Long hotelId;
 
-    @Column(name = "booking_id", nullable = false, unique = true)
-    private Long bookingId;
+    @Column(name = "booking_public_id", nullable = false, unique = true)
+    private UUID bookingPublicId;
 
     @Column(name = "rating", nullable = false)
     private Integer rating;
@@ -39,10 +40,10 @@ public class ReviewEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public ReviewEntity(Long userId, Long hotelId, Long bookingId, Integer rating, String comment) {
+    public ReviewEntity(Long userId, Long hotelId, UUID bookingPublicId, Integer rating, String comment) {
         this.userId = userId;
         this.hotelId = hotelId;
-        this.bookingId = bookingId;
+        this.bookingPublicId = bookingPublicId;
         this.rating = rating;
         this.comment = comment;
     }

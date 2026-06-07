@@ -4,19 +4,16 @@ import com.booking_hotel.notification_service.dto.RegistrationSuccessNotificatio
 import com.booking_hotel.notification_service.entity.NotificationEntity;
 import com.booking_hotel.notification_service.entity.NotificationType;
 import com.booking_hotel.notification_service.repository.NotificationRepository;
-import com.booking_hotel.notification_service.service.NotificationSender;
 import com.booking_hotel.notification_service.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class NotificationServiceJpa implements NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final List<NotificationSender> notificationSenders;
+    private final NotificationDispatcher notificationDispatcher;
 
     @Override
     public void sendRegistrationSuccessEmail(RegistrationSuccessNotificationRequest request) {
@@ -38,23 +35,7 @@ public class NotificationServiceJpa implements NotificationService {
                 message,
                 NotificationType.EMAIL
         );
-        notificationRepository.save(notification);
-
-        try {
-            resolveSender(NotificationType.EMAIL).send(request.email(), subject, message);
-            notification.markSent();
-        } catch (RuntimeException exception) {
-            notification.markFailed();
-            throw exception;
-        } finally {
-            notificationRepository.save(notification);
-        }
-    }
-
-    private NotificationSender resolveSender(NotificationType type) {
-        return notificationSenders.stream()
-                .filter(sender -> sender.supports(type))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("No sender found for type: " + type));
+        NotificationEntity saved = notificationRepository.save(notification);
+        notificationDispatcher.dispatch(saved.getId());
     }
 }

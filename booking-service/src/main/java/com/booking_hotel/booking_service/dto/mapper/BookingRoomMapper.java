@@ -30,14 +30,16 @@ public class BookingRoomMapper {
     public BookingRoomEntity toEntity(
             BookingRoomCreateForBookingRequestDTO request,
             BookingEntity booking,
+            BigDecimal pricePerNight,
+            Integer nights,
             BigDecimal totalPrice
     ) {
         return new BookingRoomEntity(
                 booking,
                 request.roomTypeId(),
                 request.quantity(),
-                request.pricePerNight(),
-                request.nights(),
+                pricePerNight,
+                nights,
                 totalPrice
         );
     }

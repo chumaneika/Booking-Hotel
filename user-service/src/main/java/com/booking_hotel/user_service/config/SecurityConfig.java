@@ -4,6 +4,7 @@ import com.booking_hotel.user_service.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,8 +25,12 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authorizeHttpRequests(auth ->
-                        auth.anyRequest().authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/api/users", "/api/users/find/**", "/api/users/check-activity/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/update-name").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/update-status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/delete/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

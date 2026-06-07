@@ -65,7 +65,7 @@ public class HotelServiceJpa implements HotelService {
         HotelEntity hotel = new HotelEntity(
                 dto.name(),
                 dto.description(),
-                1,
+                dto.rating(),
                 address,
                 List.of(),
                 dto.status()

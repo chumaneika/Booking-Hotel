@@ -1,6 +1,8 @@
 package com.booking_hotel.catalog_service.dto.hoteldto;
 
 import com.booking_hotel.catalog_service.entity.StatusHotel;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,6 +17,11 @@ public record HotelCreateDTO(
     @NotBlank
     @Size(max = 2000)
     String description,
+
+    @NotNull
+    @Min(1)
+    @Max(5)
+    Integer rating,
 
     @NotBlank
     @Size(max = 100)

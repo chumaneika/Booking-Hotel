@@ -60,8 +60,8 @@ public class HotelEntity {
     }
 
     public void changeDescription(String description) {
-        if (description == null || description.isBlank() || description.length() > 120) {
-            throw new IllegalArgumentException("Hotel name is invalid");
+        if (description == null || description.isBlank() || description.length() > 2000) {
+            throw new IllegalArgumentException("Hotel description is invalid");
         } else {
             this.description = description;
         }

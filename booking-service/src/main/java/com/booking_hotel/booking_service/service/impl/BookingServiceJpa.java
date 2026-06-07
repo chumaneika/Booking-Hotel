@@ -11,6 +11,7 @@ import com.booking_hotel.booking_service.entity.BookingEntity;
 import com.booking_hotel.booking_service.entity.BookingRoomEntity;
 import com.booking_hotel.booking_service.entity.BookingStatus;
 import com.booking_hotel.booking_service.repository.BookingRepository;
+import com.booking_hotel.booking_service.security.BookingAccessGuard;
 import com.booking_hotel.booking_service.service.BookingService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +36,12 @@ public class BookingServiceJpa implements BookingService {
     private final BookingRepository bookingRepository;
     private final BookingServiceMapper bookingServiceMapper;
     private final BookingRoomMapper bookingRoomMapper;
+    private final BookingAccessGuard bookingAccessGuard;
 
     @Override
     @Transactional
     public BookingResponseDTO createBooking(BookingCreateRequestDTO request) {
+        bookingAccessGuard.ensureCurrentUserOrPrivileged(request.userId());
         validateBookingDates(request.checkInDate(), request.checkOutDate());
 
         BookingEntity booking = bookingServiceMapper.toEntity(request);
@@ -62,13 +65,15 @@ public class BookingServiceJpa implements BookingService {
     @Transactional(readOnly = true)
     public BookingResponseDTO getBookingByPublicId(UUID publicId) {
         BookingEntity booking = findByPublicIdOrThrow(publicId);
+        bookingAccessGuard.ensureCanAccessBooking(booking);
         return bookingServiceMapper.toResponseDTO(booking);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getBookings(Long userId, Long hotelId, BookingStatus status, LocalDate checkIn, LocalDate checkOut) {
-        Specification<BookingEntity> spec = buildFilterSpecification(userId, hotelId, status, checkIn, checkOut);
+        Long effectiveUserId = bookingAccessGuard.constrainUserFilter(userId);
+        Specification<BookingEntity> spec = buildFilterSpecification(effectiveUserId, hotelId, status, checkIn, checkOut);
         return bookingRepository.findAll(spec).stream()
                 .map(bookingServiceMapper::toResponseDTO)
                 .toList();
@@ -77,6 +82,7 @@ public class BookingServiceJpa implements BookingService {
     @Override
     @Transactional
     public BookingResponseDTO updateBookingStatus(UUID publicId, BookingStatusUpdateRequestDTO request) {
+        bookingAccessGuard.ensurePrivileged();
         BookingEntity booking = findByPublicIdOrThrow(publicId);
         booking.changeStatus(request.status());
         return bookingServiceMapper.toResponseDTO(bookingRepository.save(booking));
@@ -86,13 +92,15 @@ public class BookingServiceJpa implements BookingService {
     @Transactional
     public void deleteBooking(UUID publicId) {
         BookingEntity booking = findByPublicIdOrThrow(publicId);
+        bookingAccessGuard.ensureCanAccessBooking(booking);
         bookingRepository.delete(booking);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getBookingsByUserId(Long userId) {
-        return bookingRepository.findAllByUserId(userId).stream()
+        Long effectiveUserId = bookingAccessGuard.constrainUserFilter(userId);
+        return bookingRepository.findAllByUserId(effectiveUserId).stream()
                 .map(bookingServiceMapper::toResponseDTO)
                 .toList();
     }
@@ -100,15 +108,20 @@ public class BookingServiceJpa implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getBookingsByHotelId(Long hotelId) {
-        return bookingRepository.findAllByHotelId(hotelId).stream()
-                .map(bookingServiceMapper::toResponseDTO)
-                .toList();
+        if (bookingAccessGuard.isPrivileged()) {
+            return bookingRepository.findAllByHotelId(hotelId).stream()
+                    .map(bookingServiceMapper::toResponseDTO)
+                    .toList();
+        }
+
+        return getBookings(bookingAccessGuard.currentUserId(), hotelId, null, null, null);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BookingRoomResponseDTO> getBookingRooms(UUID publicId) {
         BookingEntity booking = findByPublicIdOrThrow(publicId);
+        bookingAccessGuard.ensureCanAccessBooking(booking);
         return booking.getRooms().stream()
                 .map(bookingRoomMapper::toResponseDTO)
                 .toList();

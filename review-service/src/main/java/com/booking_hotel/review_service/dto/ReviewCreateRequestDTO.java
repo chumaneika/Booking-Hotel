@@ -1,10 +1,13 @@
 package com.booking_hotel.review_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+
+import java.util.UUID;
 
 public record ReviewCreateRequestDTO(
         @NotNull(message = "userId is required")
@@ -15,9 +18,9 @@ public record ReviewCreateRequestDTO(
         @Positive(message = "hotelId must be positive")
         Long hotelId,
 
-        @NotNull(message = "bookingId is required")
-        @Positive(message = "bookingId must be positive")
-        Long bookingId,
+        @NotNull(message = "bookingPublicId is required")
+        @JsonAlias("bookingId")
+        UUID bookingPublicId,
 
         @Size(max = 2000, message = "comment length must be less than or equal to 2000 characters")
         String comment,
