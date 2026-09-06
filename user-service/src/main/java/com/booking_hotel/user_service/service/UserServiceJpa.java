@@ -40,6 +40,8 @@ public class UserServiceJpa implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User is not found"));
 
         entity.changeStatus(Status.DELETED);
+
+        userRepository.save(entity);
     }
 
     @Override

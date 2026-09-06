@@ -47,4 +47,11 @@ public class UserEntity {
             throw new IllegalArgumentException("User's name is not valid");
         }
     }
+
+    public static UserEntity createWithStatus(Status status) {
+        UserEntity user = new UserEntity();
+        user.changeStatus(status);
+
+        return user;
+    }
 }
