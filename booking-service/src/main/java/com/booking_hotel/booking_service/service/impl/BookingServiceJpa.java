@@ -10,6 +10,7 @@ import com.booking_hotel.booking_service.dto.bookingroomdto.BookingRoomResponseD
 import com.booking_hotel.booking_service.entity.BookingEntity;
 import com.booking_hotel.booking_service.entity.BookingRoomEntity;
 import com.booking_hotel.booking_service.entity.BookingStatus;
+import com.booking_hotel.booking_service.kafka.publisher.BookingEventPublisher;
 import com.booking_hotel.booking_service.repository.BookingRepository;
 import com.booking_hotel.booking_service.security.BookingAccessGuard;
 import com.booking_hotel.booking_service.service.BookingService;
@@ -37,6 +38,7 @@ public class BookingServiceJpa implements BookingService {
     private final BookingServiceMapper bookingServiceMapper;
     private final BookingRoomMapper bookingRoomMapper;
     private final BookingAccessGuard bookingAccessGuard;
+    private final BookingEventPublisher bookingEventPublisher;
 
     @Override
     @Transactional
@@ -58,6 +60,8 @@ public class BookingServiceJpa implements BookingService {
 
         booking.updateTotalPrice(calculateBookingTotal(roomEntities));
         BookingEntity saved = bookingRepository.save(booking);
+        bookingEventPublisher.publishBookingCreated(saved);
+        bookingEventPublisher.publishRoomReservationRequested(saved);
         return bookingServiceMapper.toResponseDTO(saved);
     }
 
@@ -84,8 +88,14 @@ public class BookingServiceJpa implements BookingService {
     public BookingResponseDTO updateBookingStatus(UUID publicId, BookingStatusUpdateRequestDTO request) {
         bookingAccessGuard.ensurePrivileged();
         BookingEntity booking = findByPublicIdOrThrow(publicId);
+        BookingStatus previousStatus = booking.getStatus();
         booking.changeStatus(request.status());
-        return bookingServiceMapper.toResponseDTO(bookingRepository.save(booking));
+        BookingEntity saved = bookingRepository.save(booking);
+        publishStatusEvent(saved, "Status updated by a privileged user");
+        if (request.status() == BookingStatus.CANCELLED && isRoomReserved(previousStatus)) {
+            bookingEventPublisher.publishRoomReservationReleased(saved, "Booking cancelled");
+        }
+        return bookingServiceMapper.toResponseDTO(saved);
     }
 
     @Override
@@ -125,6 +135,71 @@ public class BookingServiceJpa implements BookingService {
         return booking.getRooms().stream()
                 .map(bookingRoomMapper::toResponseDTO)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void handleRoomsReserved(UUID bookingPublicId) {
+        BookingEntity booking = findByPublicIdOrThrow(bookingPublicId);
+        if (booking.getStatus() == BookingStatus.NEW) {
+            booking.changeStatus(BookingStatus.PAYMENT_PENDING);
+            BookingEntity saved = bookingRepository.save(booking);
+            bookingEventPublisher.publishPaymentRequested(saved);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void handleRoomReservationRejected(UUID bookingPublicId, String reason) {
+        BookingEntity booking = findByPublicIdOrThrow(bookingPublicId);
+        if (booking.getStatus() == BookingStatus.NEW
+                || booking.getStatus() == BookingStatus.ROOM_RESERVED
+                || booking.getStatus() == BookingStatus.PAYMENT_PENDING) {
+            booking.changeStatus(BookingStatus.CANCELLED);
+            BookingEntity saved = bookingRepository.save(booking);
+            bookingEventPublisher.publishBookingCancelled(saved, reason);
+//            bookingEventPublisher.publishRoomReservationReleased(saved, reason);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void handlePaymentSucceeded(UUID bookingPublicId) {
+        BookingEntity booking = findByPublicIdOrThrow(bookingPublicId);
+        if (booking.getStatus() == BookingStatus.ROOM_RESERVED
+                || booking.getStatus() == BookingStatus.PAYMENT_PENDING) {
+            booking.changeStatus(BookingStatus.PAID);
+            bookingRepository.save(booking);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void handlePaymentFailed(UUID bookingPublicId, String reason) {
+        BookingEntity booking = findByPublicIdOrThrow(bookingPublicId);
+        if (booking.getStatus() == BookingStatus.ROOM_RESERVED
+                || booking.getStatus() == BookingStatus.PAYMENT_PENDING) {
+            booking.changeStatus(BookingStatus.CANCELLED);
+            BookingEntity saved = bookingRepository.save(booking);
+            bookingEventPublisher.publishBookingCancelled(saved, reason);
+            bookingEventPublisher.publishRoomReservationReleased(saved, reason);
+        }
+    }
+
+
+    private void publishStatusEvent(BookingEntity booking, String cancellationReason) {
+        switch (booking.getStatus()) {
+            case CONFIRMED -> bookingEventPublisher.publishBookingConfirmed(booking);
+            case CANCELLED -> bookingEventPublisher.publishBookingCancelled(booking, cancellationReason);
+            case EXPIRED -> bookingEventPublisher.publishBookingExpired(booking);
+            default -> {
+                // Only business-significant terminal status transitions are published here.
+            }
+        }
+    }
+
+    private boolean isRoomReserved(BookingStatus status) {
+        return status == BookingStatus.ROOM_RESERVED || status == BookingStatus.PAYMENT_PENDING;
     }
 
     private BookingEntity findByPublicIdOrThrow(UUID publicId) {

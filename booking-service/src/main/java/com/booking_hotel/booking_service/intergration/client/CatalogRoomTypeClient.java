@@ -1,6 +1,6 @@
-package com.booking_hotel.booking_service.client;
+package com.booking_hotel.booking_service.intergration.client;
 
-import com.booking_hotel.booking_service.client.dto.RoomTypeDetailsDTO;
+import com.booking_hotel.booking_service.intergration.client.dto.RoomTypeDetailsDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

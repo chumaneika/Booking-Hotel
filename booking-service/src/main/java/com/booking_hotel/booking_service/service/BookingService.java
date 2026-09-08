@@ -19,4 +19,8 @@ public interface BookingService {
     List<BookingResponseDTO> getBookingsByUserId(Long userId);
     List<BookingResponseDTO> getBookingsByHotelId(Long hotelId);
     List<BookingRoomResponseDTO> getBookingRooms(UUID publicId);
+    void handleRoomsReserved(UUID bookingPublicId);
+    void handleRoomReservationRejected(UUID bookingPublicId, String reason);
+    void handlePaymentSucceeded(UUID bookingPublicId);
+    void handlePaymentFailed(UUID bookingPublicId, String reason);
 }

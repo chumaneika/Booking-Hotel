@@ -1,7 +1,7 @@
 package com.booking_hotel.booking_service.service.impl;
 
-import com.booking_hotel.booking_service.client.CatalogRoomTypeClient;
-import com.booking_hotel.booking_service.client.dto.RoomTypeDetailsDTO;
+import com.booking_hotel.booking_service.intergration.client.CatalogRoomTypeClient;
+import com.booking_hotel.booking_service.intergration.client.dto.RoomTypeDetailsDTO;
 import com.booking_hotel.booking_service.dto.bookingroomdto.BookingRoomCreateForBookingRequestDTO;
 import com.booking_hotel.booking_service.dto.bookingroomdto.BookingRoomQuantityUpdateRequestDTO;
 import com.booking_hotel.booking_service.dto.bookingroomdto.BookingRoomResponseDTO;

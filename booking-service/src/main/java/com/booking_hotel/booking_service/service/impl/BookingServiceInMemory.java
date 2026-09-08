@@ -55,4 +55,24 @@ public class BookingServiceInMemory implements BookingService {
     public List<BookingRoomResponseDTO> getBookingRooms(UUID publicId) {
         throw new UnsupportedOperationException("BookingServiceInMemory is not implemented");
     }
+
+    @Override
+    public void handleRoomsReserved(UUID bookingPublicId) {
+        throw new UnsupportedOperationException("BookingServiceInMemory is not implemented");
+    }
+
+    @Override
+    public void handleRoomReservationRejected(UUID bookingPublicId, String reason) {
+        throw new UnsupportedOperationException("BookingServiceInMemory is not implemented");
+    }
+
+    @Override
+    public void handlePaymentSucceeded(UUID bookingPublicId) {
+        throw new UnsupportedOperationException("BookingServiceInMemory is not implemented");
+    }
+
+    @Override
+    public void handlePaymentFailed(UUID bookingPublicId, String reason) {
+        throw new UnsupportedOperationException("BookingServiceInMemory is not implemented");
+    }
 }

@@ -19,6 +19,17 @@ spring:
       hibernate:
         format_sql: true
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: booking-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 eureka:
   client:
     service-url:
@@ -32,3 +43,14 @@ jwt:
 
 catalog-service:
   url: ${CATALOG_SERVICE_URL:http://localhost:8082}
+
+app:
+  payment:
+    currency: RUB
+  kafka:
+    topics:
+      inventory-reservation-commands: inventory.reservation.commands.v1
+      inventory-reservation-events: inventory.reservation.events.v1
+      payment-commands: payment.commands.v1
+      payment-events: payment.events.v1
+      booking-events: booking.events.v1

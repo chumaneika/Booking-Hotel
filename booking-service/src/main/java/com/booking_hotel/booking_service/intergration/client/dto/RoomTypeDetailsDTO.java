@@ -1,4 +1,4 @@
-package com.booking_hotel.booking_service.client.dto;
+package com.booking_hotel.booking_service.intergration.client.dto;
 
 import java.math.BigDecimal;
 
