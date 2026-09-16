@@ -1,6 +1,8 @@
 package com.booking_hotel.booking_service.kafka.publisher;
 
 import com.booking_hotel.booking_service.entity.BookingEntity;
+import com.booking_hotel.booking_service.kafka.events.EventEnvelope;
+import com.booking_hotel.booking_service.kafka.events.EventType;
 import com.booking_hotel.booking_service.entity.BookingRoomEntity;
 import com.booking_hotel.booking_service.kafka.events.BookingCancelledEvent;
 import com.booking_hotel.booking_service.kafka.events.BookingConfirmedEvent;
@@ -26,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BookingEventPublisher {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final com.booking_hotel.booking_service.messaging.Outbox outbox;
     private final ObjectMapper objectMapper;
 
     @Value("${app.kafka.topics.inventory-reservation-commands}")
@@ -42,7 +44,7 @@ public class BookingEventPublisher {
     private String paymentCurrency;
 
     public void publishBookingCreated(BookingEntity booking) {
-        publish(bookingEventsTopic, booking.getPublicId(), new BookingCreatedEvent(
+        publish(bookingEventsTopic, booking.getPublicId(), EventType.BOOKING_CREATED, new BookingCreatedEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 booking.getPublicId(),
@@ -56,7 +58,7 @@ public class BookingEventPublisher {
     }
 
     public void publishRoomReservationRequested(BookingEntity booking) {
-        publish(inventoryReservationCommandsTopic, booking.getPublicId(), new RoomReservationRequestedEvent(
+        publish(inventoryReservationCommandsTopic, booking.getPublicId(), EventType.ROOM_RESERVATION_REQUESTED, new RoomReservationRequestedEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 reservationId(booking),
@@ -69,7 +71,7 @@ public class BookingEventPublisher {
     }
 
     public void publishPaymentRequested(BookingEntity booking) {
-        publish(paymentCommandsTopic, booking.getPublicId(), new PaymentRequestedEvent(
+        publish(paymentCommandsTopic, booking.getPublicId(), EventType.PAYMENT_REQUESTED, new PaymentRequestedEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 paymentId(booking),
@@ -81,7 +83,7 @@ public class BookingEventPublisher {
     }
 
     public void publishRoomReservationReleased(BookingEntity booking, String reason) {
-        publish(inventoryReservationCommandsTopic, booking.getPublicId(), new RoomReservationReleasedEvent(
+        publish(inventoryReservationCommandsTopic, booking.getPublicId(), EventType.ROOM_RESERVATION_RELEASED, new RoomReservationReleasedEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 reservationId(booking),
@@ -91,7 +93,7 @@ public class BookingEventPublisher {
     }
 
     public void publishBookingConfirmed(BookingEntity booking) {
-        publish(bookingEventsTopic, booking.getPublicId(), new BookingConfirmedEvent(
+        publish(bookingEventsTopic, booking.getPublicId(), EventType.BOOKING_CONFIRMED, new BookingConfirmedEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 booking.getPublicId(),
@@ -104,7 +106,7 @@ public class BookingEventPublisher {
     }
 
     public void publishBookingCancelled(BookingEntity booking, String reason) {
-        publish(bookingEventsTopic, booking.getPublicId(), new BookingCancelledEvent(
+        publish(bookingEventsTopic, booking.getPublicId(), EventType.BOOKING_CANCELLED, new BookingCancelledEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 booking.getPublicId(),
@@ -115,7 +117,7 @@ public class BookingEventPublisher {
     }
 
     public void publishBookingExpired(BookingEntity booking) {
-        publish(bookingEventsTopic, booking.getPublicId(), new BookingExpiredEvent(
+        publish(bookingEventsTopic, booking.getPublicId(), EventType.BOOKING_EXPIRED, new BookingExpiredEvent(
                 UUID.randomUUID(),
                 Instant.now(),
                 booking.getPublicId(),
@@ -134,9 +136,10 @@ public class BookingEventPublisher {
         return new ReservedRoom(room.getRoomTypeId(), room.getQuantity());
     }
 
-    private void publish(String topic, UUID bookingPublicId, Object event) {
+    private void publish(String topic, UUID bookingPublicId, EventType eventType, Object event) {
         try {
-            kafkaTemplate.send(topic, bookingPublicId.toString(), objectMapper.writeValueAsString(event));
+            outbox.enqueue(topic, bookingPublicId.toString(),
+                    objectMapper.writeValueAsString(new EventEnvelope<>(eventType, event)));
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Cannot serialize Kafka event", exception);
         }

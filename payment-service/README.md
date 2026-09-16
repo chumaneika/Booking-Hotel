@@ -1,10 +1,12 @@
 # payment-service
 
-Каркас сервиса платежей Booking Hotel.
+Сервис платежей Booking Hotel с тестовым платёжным адаптером.
 
 ## Назначение
 
-Сервис подготовлен как отдельное Spring Boot приложение для будущей обработки платежей. Сейчас в коде есть базовая конфигурация, подключение к PostgreSQL, JWT security и тестовый endpoint `GET /test/hello`. Доменные платежные контроллеры и сущности пока не реализованы.
+Получает PAYMENT_REQUESTED из payment.commands.v1, сохраняет платёж PENDING в PostgreSQL. Команда идемпотентна по paymentId. Результат SUCCEEDED/FAILED сохраняется вместе с исходящим событием в outbox и доставляется в payment.events.v1. Сообщения имеют явные eventType/payload. При временной ошибке БД обработка команды повторяется.
+
+Реальное списание денег не реализовано: нужен выбранный провайдер, его ключи и проверяемые webhooks. DEMO_PAYMENT_ENABLED=false по умолчанию; не включайте demo в настоящем окружении.
 
 ## Порт
 
@@ -45,6 +47,8 @@ jdbc:postgresql://localhost:5432/payment_db
 | Метод | Путь | Описание |
 | --- | --- | --- |
 | `GET` | `/test/hello` | тестовая проверка работы сервиса |
+| `GET` | `/api/payments?bookingPublicId=<UUID>` | платёж владельца брони или администратора |
+| `POST` | `/api/payments/{paymentId}/demo` | только при DEMO_PAYMENT_ENABLED=true: {"outcome":"SUCCEEDED"} или {"outcome":"FAILED"}; денег не списывает |
 
 ## Безопасность
 
@@ -54,11 +58,11 @@ jdbc:postgresql://localhost:5432/payment_db
 
 | Переменная | Значение по умолчанию | Описание |
 | --- | --- | --- |
-| `JWT_SECRET` | dev-secret из `application.yaml` | секрет подписи JWT |
+| `JWT_SECRET` | обязательно из окружения | секрет подписи JWT, минимум 32 символа |
 | `JWT_EXPIRATION` | `86400000` | срок действия токена |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/payment_db` | URL PostgreSQL |
-| `SPRING_DATASOURCE_USERNAME` | `malik` | пользователь БД |
-| `SPRING_DATASOURCE_PASSWORD` | `12345678` | пароль БД |
+| `SPRING_DATASOURCE_USERNAME` | `POSTGRES_USER` / `booking_hotel` | пользователь БД |
+| `SPRING_DATASOURCE_PASSWORD` | `POSTGRES_PASSWORD` из окружения | обязательный пароль БД |
 
 ## Локальный запуск
 
@@ -85,8 +89,6 @@ docker compose up --build payment-service
 
 ## Что стоит добавить дальше
 
-- модель платежа и статусы платежей
-- API создания платежа по бронированию
-- интеграцию с внешним платежным провайдером или mock-адаптером
-- идемпотентность платежных операций
+- интеграцию с внешним платёжным провайдером
 - callbacks/webhooks от провайдера
+- возвраты и сверку платежей при отмене бронирования

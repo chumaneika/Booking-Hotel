@@ -43,6 +43,11 @@ public class KafkaConfig {
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configs.put(ProducerConfig.ACKS_CONFIG, "all");
+        configs.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        configs.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 5000);
+        configs.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 30000);
+        configs.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 10000);
         return new DefaultKafkaProducerFactory<>(configs);
     }
 
@@ -76,6 +81,9 @@ public class KafkaConfig {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(consumerFactory);
         factory.setAutoStartup(autoStartup);
+        var handler = new org.springframework.kafka.listener.DefaultErrorHandler(new org.springframework.util.backoff.FixedBackOff(1000L, Long.MAX_VALUE));
+        handler.addNotRetryableExceptions(IllegalArgumentException.class, org.springframework.web.server.ResponseStatusException.class);
+        factory.setCommonErrorHandler(handler);
         return factory;
     }
 

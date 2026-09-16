@@ -5,10 +5,25 @@ spring:
   application:
     name: payment-service
 
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      properties:
+        max.block.ms: 5000
+        delivery.timeout.ms: 30000
+        request.timeout.ms: 10000
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
   datasource:
     url: jdbc:postgresql://localhost:5432/payment_db
-    username: malik
-    password: 12345678
+    username: ${POSTGRES_USER:booking_hotel}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,6 +41,14 @@ eureka:
     enabled: false
 
 jwt:
-  # For production set JWT_SECRET env (min 32 chars for HS256)
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  # Required JWT_SECRET env (min 32 chars for HS256)
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+
+app:
+  payment:
+    demo-enabled: ${DEMO_PAYMENT_ENABLED:false}
+  kafka:
+    topics:
+      payment-commands: payment.commands.v1
+      payment-events: payment.events.v1

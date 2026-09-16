@@ -1,5 +1,8 @@
 # service-discovery
 
+В Compose Eureka доступна только внутри Docker-сети; порт 8761 на хост
+не публикуется. Адреса localhost ниже относятся к запуску сервиса без Docker.
+
 Eureka Server для регистрации и обнаружения микросервисов Booking Hotel.
 
 ## Назначение

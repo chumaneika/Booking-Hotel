@@ -23,6 +23,11 @@ public class JwtService {
         return extractAllClaims(token).getSubject();
     }
 
+    public Long extractUserId(String token) {
+        Object value=extractAllClaims(token).get("userId");
+        return value instanceof Number number ? number.longValue() : null;
+    }
+
     public List<String> extractRoles(String token) {
         Object rolesClaim = extractAllClaims(token).get("roles");
 

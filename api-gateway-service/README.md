@@ -1,5 +1,7 @@
 # api-gateway-service
 
+DNS-кэш исходящих HTTP-запросов ограничен пятью секундами, чтобы gateway восстанавливал доступ после смены IP Docker-контейнера. Настройка использует [Reactor Netty resolver](https://projectreactor.io/docs/netty/release/api/reactor/netty/transport/NameResolverProvider.NameResolverSpec.html). Установлены таймаут подключения 3 секунды и ответа 15 секунд.
+
 API Gateway для Booking Hotel на Spring Cloud Gateway.
 
 ## Назначение
@@ -71,6 +73,10 @@ EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://localhost:8761/eureka \
 ```
 
 ## Docker
+
+В Compose порт Gateway не публикуется на хост. Внешний доступ идёт через
+Caddy: `https://<PUBLIC_DOMAIN>/<service-id>/api/...`.
+Подготовка `.env` и настройка домена описаны в корневом README.
 
 Из корня репозитория:
 

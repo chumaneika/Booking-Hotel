@@ -1,0 +1,7 @@
+{
+	admin off
+}
+
+https://{$PUBLIC_DOMAIN} {
+	reverse_proxy api-gateway-service:8080
+}

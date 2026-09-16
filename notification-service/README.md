@@ -106,11 +106,11 @@ ADMIN, MANAGER
 
 | Переменная | Значение по умолчанию | Описание |
 | --- | --- | --- |
-| `JWT_SECRET` | dev-secret из `application.yaml` | секрет подписи JWT |
+| `JWT_SECRET` | обязательно из окружения | секрет подписи JWT, минимум 32 символа |
 | `JWT_EXPIRATION` | `86400000` | срок действия токена |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/notification_db` | URL PostgreSQL |
-| `SPRING_DATASOURCE_USERNAME` | `malik` | пользователь БД |
-| `SPRING_DATASOURCE_PASSWORD` | `12345678` | пароль БД |
+| `SPRING_DATASOURCE_USERNAME` | `POSTGRES_USER` / `booking_hotel` | пользователь БД |
+| `SPRING_DATASOURCE_PASSWORD` | `POSTGRES_PASSWORD` из окружения | обязательный пароль БД |
 
 ## Локальный запуск
 

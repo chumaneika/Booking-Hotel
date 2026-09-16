@@ -39,6 +39,7 @@ public class BookingServiceJpa implements BookingService {
     private final BookingRoomMapper bookingRoomMapper;
     private final BookingAccessGuard bookingAccessGuard;
     private final BookingEventPublisher bookingEventPublisher;
+    private final com.booking_hotel.booking_service.intergration.client.CatalogRoomTypeClient catalogRoomTypeClient;
 
     @Override
     @Transactional
@@ -48,13 +49,20 @@ public class BookingServiceJpa implements BookingService {
 
         BookingEntity booking = bookingServiceMapper.toEntity(request);
         List<BookingRoomEntity> roomEntities = booking.getRooms();
+        int nights = Math.toIntExact(java.time.temporal.ChronoUnit.DAYS.between(request.checkInDate(), request.checkOutDate()));
+        java.util.Set<Long> roomIds = new java.util.HashSet<>();
 
         for (BookingRoomCreateRequestDTO roomRequest : request.rooms()) {
-            BookingRoomEntity room = bookingRoomMapper.toEntity(
-                    roomRequest,
-                    booking,
-                    calculateRoomTotal(roomRequest.pricePerNight(), roomRequest.nights(), roomRequest.quantity())
-            );
+            if (!roomIds.add(roomRequest.roomTypeId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Duplicate room type");
+            }
+            var details = catalogRoomTypeClient.getRoomType(request.hotelId(), roomRequest.roomTypeId());
+            if (details == null || details.basePrice() == null || details.basePrice().signum() <= 0) {
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Invalid catalog price");
+            }
+            BigDecimal price = details.basePrice();
+            BookingRoomEntity room = new BookingRoomEntity(booking, roomRequest.roomTypeId(),
+                    roomRequest.quantity(), price, nights, calculateRoomTotal(price, nights, roomRequest.quantity()));
             roomEntities.add(room);
         }
 
@@ -89,10 +97,17 @@ public class BookingServiceJpa implements BookingService {
         bookingAccessGuard.ensurePrivileged();
         BookingEntity booking = findByPublicIdOrThrow(publicId);
         BookingStatus previousStatus = booking.getStatus();
+        if (previousStatus == request.status()) return bookingServiceMapper.toResponseDTO(booking);
+        if (!(request.status() == BookingStatus.CONFIRMED && previousStatus == BookingStatus.PAID)
+                && !((request.status() == BookingStatus.CANCELLED || request.status() == BookingStatus.EXPIRED)
+                && previousStatus != BookingStatus.PAID && previousStatus != BookingStatus.CONFIRMED
+                && previousStatus != BookingStatus.CANCELLED && previousStatus != BookingStatus.EXPIRED)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invalid booking status transition");
+        }
         booking.changeStatus(request.status());
         BookingEntity saved = bookingRepository.save(booking);
         publishStatusEvent(saved, "Status updated by a privileged user");
-        if (request.status() == BookingStatus.CANCELLED && isRoomReserved(previousStatus)) {
+        if (request.status() == BookingStatus.CANCELLED || request.status() == BookingStatus.EXPIRED) {
             bookingEventPublisher.publishRoomReservationReleased(saved, "Booking cancelled");
         }
         return bookingServiceMapper.toResponseDTO(saved);
@@ -103,7 +118,14 @@ public class BookingServiceJpa implements BookingService {
     public void deleteBooking(UUID publicId) {
         BookingEntity booking = findByPublicIdOrThrow(publicId);
         bookingAccessGuard.ensureCanAccessBooking(booking);
-        bookingRepository.delete(booking);
+        if (booking.getStatus() == BookingStatus.PAID || booking.getStatus() == BookingStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Paid booking requires a refund workflow");
+        }
+        if (booking.getStatus() != BookingStatus.CANCELLED && booking.getStatus() != BookingStatus.EXPIRED) {
+            booking.changeStatus(BookingStatus.CANCELLED);
+            bookingEventPublisher.publishBookingCancelled(booking, "Cancelled by owner");
+            bookingEventPublisher.publishRoomReservationReleased(booking, "Cancelled by owner");
+        }
     }
 
     @Override
@@ -158,7 +180,6 @@ public class BookingServiceJpa implements BookingService {
             booking.changeStatus(BookingStatus.CANCELLED);
             BookingEntity saved = bookingRepository.save(booking);
             bookingEventPublisher.publishBookingCancelled(saved, reason);
-//            bookingEventPublisher.publishRoomReservationReleased(saved, reason);
         }
     }
 
@@ -203,12 +224,14 @@ public class BookingServiceJpa implements BookingService {
     }
 
     private BookingEntity findByPublicIdOrThrow(UUID publicId) {
-        return bookingRepository.findByPublicId(publicId)
+        return (org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()
+                ? bookingRepository.findByPublicId(publicId) : bookingRepository.findLockedByPublicId(publicId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found: " + publicId));
     }
 
     private void validateBookingDates(LocalDate checkInDate, LocalDate checkOutDate) {
-        if (!checkOutDate.isAfter(checkInDate)) {
+        if (!checkOutDate.isAfter(checkInDate) || checkInDate.isBefore(LocalDate.now())
+                || java.time.temporal.ChronoUnit.DAYS.between(checkInDate, checkOutDate) > 365) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "checkOutDate must be after checkInDate");
         }
     }

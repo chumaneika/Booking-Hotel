@@ -32,6 +32,8 @@ import java.util.UUID;
 @Primary
 public class BookingRoomServiceJpa implements BookingRoomService {
     private static final Set<BookingStatus> LOCKED_BOOKING_STATUSES = EnumSet.of(
+            BookingStatus.NEW,
+            BookingStatus.ROOM_RESERVED,
             BookingStatus.PAYMENT_PENDING,
             BookingStatus.PAID,
             BookingStatus.CONFIRMED,

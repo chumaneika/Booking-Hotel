@@ -20,13 +20,26 @@ public class InventoryReservationEventsListener {
     @KafkaListener(topics = "${app.kafka.topics.inventory-reservation-events}")
     public void onInventoryReservationEvent(String payload) {
         JsonNode event = readTree(payload);
-        if (event.hasNonNull("reason")) {
-            RoomReservationRejectedEvent rejected = read(payload, RoomReservationRejectedEvent.class);
+        if (event == null || !event.path("eventType").isTextual()
+                || !event.path("payload").isObject()) {
+            throw new IllegalArgumentException("eventType and object payload are required");
+        }
+        String eventType = event.get("eventType").textValue();
+        JsonNode body = event.get("payload");
+        if (!body.path("bookingPublicId").isTextual()) {
+            throw new IllegalArgumentException("bookingPublicId is required");
+        }
+        java.util.UUID.fromString(body.get("bookingPublicId").textValue());
+        if ("ROOM_RESERVATION_REJECTED".equals(eventType)) {
+            RoomReservationRejectedEvent rejected = read(body.toString(), RoomReservationRejectedEvent.class);
             bookingService.handleRoomReservationRejected(rejected.bookingPublicId(), rejected.reason());
             return;
         }
 
-        RoomReservedEvent reserved = read(payload, RoomReservedEvent.class);
+        if (!"ROOM_RESERVED".equals(eventType)) {
+            throw new IllegalArgumentException("Unsupported eventType: " + eventType);
+        }
+        RoomReservedEvent reserved = read(body.toString(), RoomReservedEvent.class);
         bookingService.handleRoomsReserved(reserved.bookingPublicId());
     }
 

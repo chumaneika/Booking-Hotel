@@ -23,6 +23,11 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionController {
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponseDTO> handleStatus(org.springframework.web.server.ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponseDTO(
+                LocalDateTime.now(),e.getStatusCode().value(),"Request rejected",e.getReason(),"N/A",null));
+    }
 
     /**
      * Обработка ошибок валидации полей запроса (@Valid)

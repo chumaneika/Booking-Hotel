@@ -13,21 +13,6 @@ import java.math.BigDecimal;
 public class BookingRoomMapper {
 
     public BookingRoomEntity toEntity(
-            BookingRoomCreateRequestDTO request,
-            BookingEntity booking,
-            BigDecimal totalPrice
-    ) {
-        return new BookingRoomEntity(
-                booking,
-                request.roomTypeId(),
-                request.quantity(),
-                request.pricePerNight(),
-                request.nights(),
-                totalPrice
-        );
-    }
-
-    public BookingRoomEntity toEntity(
             BookingRoomCreateForBookingRequestDTO request,
             BookingEntity booking,
             BigDecimal pricePerNight,

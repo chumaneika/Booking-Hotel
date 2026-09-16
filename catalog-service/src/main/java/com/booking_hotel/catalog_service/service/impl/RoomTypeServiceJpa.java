@@ -23,6 +23,7 @@ import java.util.List;
 @Primary
 @Transactional
 public class RoomTypeServiceJpa implements RoomTypeService {
+    private final com.booking_hotel.catalog_service.repository.InventoryReservationRoomRepository inventory;
 
     private final RoomTypeRepository roomTypeRepository;
     private final HotelRepository hotelRepository;
@@ -75,7 +76,7 @@ public class RoomTypeServiceJpa implements RoomTypeService {
 
     @Override
     public void updateRoomType(Long hotelId, Long roomTypeId, RoomTypeUpdateDTO dto) {
-        RoomTypeEntity roomType = roomTypeRepository.findById(roomTypeId)
+        RoomTypeEntity roomType = roomTypeRepository.findLockedById(roomTypeId)
                 .orElseThrow(() -> new EntityNotFoundException("Room type is not found"));
 
         if (!roomType.getHotel().getId().equals(hotelId)) {
@@ -98,6 +99,17 @@ public class RoomTypeServiceJpa implements RoomTypeService {
             roomType.changeBedType(dto.bedType());
         }
         if (dto.quantityRoom() != null) {
+            var reservations=inventory.findByRoomTypeId(roomTypeId);
+            var today=java.time.LocalDate.now();
+            var days=new java.util.HashSet<java.time.LocalDate>(); days.add(today);
+            reservations.stream().map(com.booking_hotel.catalog_service.entity.InventoryReservationRoom::getCheckInDate)
+                    .filter(day->!day.isBefore(today)).forEach(days::add);
+            for(var day:days) {
+                long occupied=reservations.stream().filter(r->!r.getCheckInDate().isAfter(day) && r.getCheckOutDate().isAfter(day))
+                        .mapToLong(com.booking_hotel.catalog_service.entity.InventoryReservationRoom::getQuantity).sum();
+                if(occupied>dto.quantityRoom()) throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.CONFLICT,"Capacity is below existing reservations");
+            }
             roomType.changeQuantityRoom(dto.quantityRoom());
         }
 
@@ -106,13 +118,15 @@ public class RoomTypeServiceJpa implements RoomTypeService {
 
     @Override
     public void deleteRoomType(Long hotelId, Long roomTypeId) {
-        RoomTypeEntity roomType = roomTypeRepository.findById(roomTypeId)
+        RoomTypeEntity roomType = roomTypeRepository.findLockedById(roomTypeId)
                 .orElseThrow(() -> new EntityNotFoundException("Room type is not found"));
 
         if (!roomType.getHotel().getId().equals(hotelId)) {
             throw new IllegalArgumentException("Room type does not belong to the specified hotel");
         }
 
+        if(inventory.findByRoomTypeId(roomTypeId).stream().anyMatch(r->r.getCheckOutDate().isAfter(java.time.LocalDate.now())))
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,"Room type has active reservations");
         roomTypeRepository.delete(roomType);
     }
 }

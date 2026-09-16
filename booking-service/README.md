@@ -1,5 +1,23 @@
 # booking-service
 
+## Формат Kafka-сообщений
+
+Publisher отправляет JSON-конверт с полями `eventType` и `payload`.
+Kafka key — строковый `bookingPublicId`. Поля существующих event records
+(`eventId`, `occurredAt`, идентификаторы и бизнес-данные) находятся внутри `payload`.
+
+- `inventory.reservation.events.v1`: `ROOM_RESERVED`, `ROOM_RESERVATION_REJECTED`.
+- `payment.events.v1`: `PAYMENT_SUCCEEDED`, `PAYMENT_FAILED`.
+- `inventory.reservation.commands.v1`: `ROOM_RESERVATION_REQUESTED`, `ROOM_RESERVATION_RELEASED`.
+- `payment.commands.v1`: `PAYMENT_REQUESTED`.
+- `booking.events.v1`: `BOOKING_CREATED`, `BOOKING_CONFIRMED`, `BOOKING_CANCELLED`, `BOOKING_EXPIRED`.
+
+Listeners выбирают обработчик по `eventType`, а не по наличию `reason`.
+Неизвестный тип, тип из другого топика, отсутствующий конверт или некорректный
+`bookingPublicId` приводят к исключению до вызова бизнес-логики.
+Другие сервисы должны использовать тот же формат. Старые сообщения без конверта
+не поддерживаются и должны быть преобразованы перед повторной отправкой.
+
 Сервис бронирований Booking Hotel.
 
 ## Назначение
@@ -57,7 +75,7 @@ jdbc:postgresql://localhost:5432/booking_db
 | `GET` | `/api/bookings/{publicId}` | получить бронирование по публичному UUID |
 | `GET` | `/api/bookings` | фильтр по `userId`, `hotelId`, `status`, `checkIn`, `checkOut` |
 | `PATCH` | `/api/bookings/{publicId}/status` | обновить статус |
-| `DELETE` | `/api/bookings/{publicId}` | удалить бронирование |
+| `DELETE` | `/api/bookings/{publicId}` | отменить неоплаченную бронь и освободить резерв; история сохраняется |
 | `GET` | `/api/bookings/user/{userId}` | бронирования пользователя |
 | `GET` | `/api/bookings/hotel/{hotelId}` | бронирования отеля |
 | `GET` | `/api/bookings/{publicId}/rooms` | номера внутри бронирования |
@@ -74,20 +92,22 @@ Content-Type: application/json
 {
   "userId": 1,
   "hotelId": 1,
-  "checkInDate": "2026-07-01",
-  "checkOutDate": "2026-07-05",
+  "checkInDate": "2027-07-01",
+  "checkOutDate": "2027-07-05",
   "rooms": [
     {
       "roomTypeId": 1,
-      "quantity": 1,
-      "pricePerNight": 120.00,
-      "nights": 4
+      "quantity": 1
     }
   ]
 }
 ```
 
 ### Обновление статуса
+
+Цена берётся сервером из catalog-service, ночи рассчитываются по датам. Старые поля pricePerNight/nights в запросе игнорируются. Состав созданной брони неизменяем: резервирование запускается сразу. Даты должны быть в будущем или сегодня, длительность — от 1 до 365 ночей.
+
+Успешная тестовая оплата переводит бронь в PAID; подтверждение администратором допускается только из PAID. Резервирование и платежи используют идемпотентные Kafka-обработчики, исходящие события — транзакционный outbox. Отказ оплаты отменяет бронь и освобождает номера.
 
 ```json
 {
@@ -125,12 +145,12 @@ NEW, ROOM_RESERVED, PAYMENT_PENDING, PAID, CONFIRMED, CANCELLED, EXPIRED
 
 | Переменная | Значение по умолчанию | Описание |
 | --- | --- | --- |
-| `JWT_SECRET` | dev-secret из `application.yaml` | секрет подписи JWT |
+| `JWT_SECRET` | обязательно из окружения | секрет подписи JWT, минимум 32 символа |
 | `JWT_EXPIRATION` | `86400000` | срок действия токена |
 | `CATALOG_SERVICE_URL` | `http://localhost:8082` | URL catalog-service |
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/booking_db` | URL PostgreSQL |
-| `SPRING_DATASOURCE_USERNAME` | `malik` | пользователь БД |
-| `SPRING_DATASOURCE_PASSWORD` | `12345678` | пароль БД |
+| `SPRING_DATASOURCE_USERNAME` | `POSTGRES_USER` / `booking_hotel` | пользователь БД |
+| `SPRING_DATASOURCE_PASSWORD` | `POSTGRES_PASSWORD` из окружения | обязательный пароль БД |
 
 ## Локальный запуск
 

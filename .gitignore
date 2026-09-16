@@ -1,2 +1,9 @@
 .DS_Store
 .idea/
+
+# Local deployment secrets
+.env
+.env.*
+!.env.example
+backups/
+backup-export/

@@ -20,13 +20,26 @@ public class PaymentEventsListener {
     @KafkaListener(topics = "${app.kafka.topics.payment-events}")
     public void onPaymentEvent(String payload) {
         JsonNode event = readTree(payload);
-        if (event.hasNonNull("reason")) {
-            PaymentFailedEvent failed = read(payload, PaymentFailedEvent.class);
+        if (event == null || !event.path("eventType").isTextual()
+                || !event.path("payload").isObject()) {
+            throw new IllegalArgumentException("eventType and object payload are required");
+        }
+        String eventType = event.get("eventType").textValue();
+        JsonNode body = event.get("payload");
+        if (!body.path("bookingPublicId").isTextual()) {
+            throw new IllegalArgumentException("bookingPublicId is required");
+        }
+        java.util.UUID.fromString(body.get("bookingPublicId").textValue());
+        if ("PAYMENT_FAILED".equals(eventType)) {
+            PaymentFailedEvent failed = read(body.toString(), PaymentFailedEvent.class);
             bookingService.handlePaymentFailed(failed.bookingPublicId(), failed.reason());
             return;
         }
 
-        PaymentSucceededEvent succeeded = read(payload, PaymentSucceededEvent.class);
+        if (!"PAYMENT_SUCCEEDED".equals(eventType)) {
+            throw new IllegalArgumentException("Unsupported eventType: " + eventType);
+        }
+        PaymentSucceededEvent succeeded = read(body.toString(), PaymentSucceededEvent.class);
         bookingService.handlePaymentSucceeded(succeeded.bookingPublicId());
     }
 

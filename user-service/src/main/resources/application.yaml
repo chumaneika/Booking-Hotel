@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/users_db
-    username: malik
-    password: 12345678
+    username: ${POSTGRES_USER:booking_hotel}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -26,6 +26,6 @@ eureka:
     enabled: false
 
 jwt:
-  # For production set JWT_SECRET env (min 32 chars for HS256)
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  # Required JWT_SECRET env (min 32 chars for HS256)
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
